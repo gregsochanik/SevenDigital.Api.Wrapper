@@ -5,6 +5,7 @@ using FakeItEasy;
 using NUnit.Framework;
 using SevenDigital.Api.Wrapper.Environment;
 using SevenDigital.Api.Wrapper.Requests;
+using SevenDigital.Api.Wrapper.Requests.Serializing;
 
 namespace SevenDigital.Api.Wrapper.Unit.Tests.Requests
 {
@@ -116,8 +117,28 @@ namespace SevenDigital.Api.Wrapper.Unit.Tests.Requests
 			};
 
 			var request = _requestBuilder.BuildRequest(requestData);
-			Assert.That(request.Body.Data, Is.EqualTo(parameters.ToQueryString()));
-			Assert.That(request.Body.ContentType, Is.EqualTo("application/x-www-form-urlencoded"));
+			Assert.That(request.Body.Data, Is.EqualTo("I am a payload"));
+			Assert.That(request.Body.ContentType, Is.EqualTo("text/plain"));
+		}
+
+		[Test]
+		public void Post_data_with_params_and_requestBody_maintains_qs_if_body_is_json()
+		{
+			var parameters = new Dictionary<string, string>
+			{
+				{"one", "one"}
+			};
+			var jsonPayload = new JsonPayloadSerializer();
+			var requestData = new RequestData
+			{
+				Parameters = parameters,
+				HttpMethod = HttpMethod.Post,
+				Payload = new RequestPayload(jsonPayload.ContentType, jsonPayload.Serialize(new TestPayload("Hello world")))
+			};
+
+			var request = _requestBuilder.BuildRequest(requestData);
+			Assert.That(request.Body.Data, Is.EqualTo("{\"data\":null}"));
+			Assert.That(request.Body.ContentType, Is.EqualTo("application/json"));
 		}
 
 		[Test]
@@ -198,5 +219,15 @@ namespace SevenDigital.Api.Wrapper.Unit.Tests.Requests
 			Assert.That(traceIdHeader, Is.Not.Null);
 			Assert.That(traceIdHeader, Is.EqualTo(customTraceId));
 		}
+	}
+
+	internal class TestPayload
+	{
+		public TestPayload(string data)
+		{
+			Data = Data;
+		}
+
+		public string Data { get; set; }
 	}
 }

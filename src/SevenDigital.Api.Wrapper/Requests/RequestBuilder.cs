@@ -36,7 +36,7 @@ namespace SevenDigital.Api.Wrapper.Requests
 			var traceId = requestData.TraceId ?? Guid.NewGuid().ToString();
 			headers.Add("x-7d-traceid", traceId);
 
-			if (requestData.HttpMethod.HasParamsInQueryString() && (apiRequest.Parameters.Count > 0))
+			if ((apiRequest.Parameters.Count > 0))
 			{
 				fullUrl += "?" + apiRequest.Parameters.ToQueryString();
 			}
@@ -49,8 +49,9 @@ namespace SevenDigital.Api.Wrapper.Requests
 			var shouldHaveRequestBody = requestData.HttpMethod.ShouldHaveRequestBody();
 			var hasSuppliedParameters = requestParameters.Count > 0;
 			var hasSuppliedARequestPayload = requestData.Payload != null;
+			var payloadContentTypeIsNotFormUrlEncoded = requestData.Payload != null && requestData.Payload.ContentType != "application/x-www-form-urlencoded";
 
-			if (shouldHaveRequestBody && hasSuppliedParameters)
+			if (shouldHaveRequestBody && hasSuppliedParameters && !payloadContentTypeIsNotFormUrlEncoded)
 			{
 				return new RequestPayload(FormUrlEncoded, requestParameters.ToQueryString());
 			}
